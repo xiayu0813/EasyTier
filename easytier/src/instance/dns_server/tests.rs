@@ -221,9 +221,10 @@ async fn test_magic_dns_update_replaces_records_for_same_client() {
     replace_stun_info_collector(peer_mgr.clone(), NatType::PortRestricted);
 
     let fake_ip = Ipv4Addr::from_str(MAGIC_DNS_FAKE_IP).unwrap();
-    let dns_server_inst = MagicDnsServerInstance::new(peer_mgr.clone(), None, tun_ip, fake_ip, vec![])
-        .await
-        .unwrap();
+    let dns_server_inst =
+        MagicDnsServerInstance::new(peer_mgr.clone(), None, tun_ip, fake_ip, vec![])
+            .await
+            .unwrap();
 
     let mut ctrl = BaseController::default();
     ctrl.set_tunnel_info(Some(crate::proto::common::TunnelInfo {
