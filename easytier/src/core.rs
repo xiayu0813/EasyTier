@@ -603,6 +603,15 @@ struct NetworkOptions {
     tld_dns_zone: Option<String>,
 
     #[arg(
+        long = "dns-servers",
+        env = "ET_DNS_SERVERS",
+        value_delimiter = ',',
+        help = t!("core_clap.dns_servers").to_string(),
+        num_args = 1..
+    )]
+    dns_servers: Vec<String>,
+
+    #[arg(
         long,
         env = "ET_PRIVATE_MODE",
         help = t!("core_clap.private_mode").to_string(),
@@ -1175,6 +1184,9 @@ impl NetworkOptions {
         // Configure tld_dns_zone: use provided value if set
         if let Some(tld_dns_zone) = &self.tld_dns_zone {
             f.tld_dns_zone = tld_dns_zone.clone();
+        }
+        if !self.dns_servers.is_empty() {
+            f.dns_servers = self.dns_servers.clone();
         }
         cfg.set_flags(f);
 

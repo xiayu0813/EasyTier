@@ -796,7 +796,8 @@ impl Instance {
         tun_ip: Ipv4Inet,
     ) -> Option<DnsRunner> {
         let ctx = peer_mgr.get_global_ctx();
-        if !ctx.config.get_flags().accept_dns {
+        let flags = ctx.config.get_flags();
+        if !flags.accept_dns {
             return None;
         }
 
@@ -805,6 +806,7 @@ impl Instance {
             tun_dev,
             tun_ip,
             MAGIC_DNS_FAKE_IP.parse().unwrap(),
+            flags.dns_servers.clone(),
         );
         Some(runner)
     }

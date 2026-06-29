@@ -15,6 +15,7 @@ pub struct DnsRunner {
     tun_dev: Option<String>,
     tun_inet: Ipv4Inet,
     fake_ip: Ipv4Addr,
+    dns_servers: Vec<String>,
 }
 
 impl DnsRunner {
@@ -23,6 +24,7 @@ impl DnsRunner {
         tun_dev: Option<String>,
         tun_inet: Ipv4Inet,
         fake_ip: Ipv4Addr,
+        dns_servers: Vec<String>,
     ) -> Self {
         Self {
             client: None,
@@ -31,6 +33,7 @@ impl DnsRunner {
             tun_dev,
             tun_inet,
             fake_ip,
+            dns_servers,
         }
     }
 
@@ -48,6 +51,7 @@ impl DnsRunner {
             self.tun_dev.clone(),
             self.tun_inet,
             self.fake_ip,
+            self.dns_servers.clone(),
         )
         .await
         {

@@ -185,7 +185,7 @@ mod tests {
 
         println!("dev_name: {}", tun_name);
         let fake_ip = Ipv4Addr::from_str("100.100.100.101").unwrap();
-        let mut dns_runner = DnsRunner::new(peer_mgr, Some(tun_name.clone()), tun_ip, fake_ip);
+        let mut dns_runner = DnsRunner::new(peer_mgr, Some(tun_name.clone()), tun_ip, fake_ip, vec![]);
 
         let cancel_token = CancellationToken::new();
         let cancel_token_clone = cancel_token.clone();

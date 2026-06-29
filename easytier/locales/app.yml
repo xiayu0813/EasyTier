@@ -229,6 +229,9 @@ core_clap:
   tld_dns_zone:
     en: "specify the top-level domain zone for magic DNS. if not provided, defaults to the value from dns_server module (et.net.). only used when accept_dns is true."
     zh-CN: "指定魔法DNS的顶级域名区域。如果未提供，默认使用dns_server模块中的值（et.net.）。仅在accept_dns为true时使用。"
+  dns_servers:
+    en: "specify custom DNS server IPs to set on the TUN interface. these will be used alongside the magic DNS fake IP. comma-separated list, e.g.: 8.8.8.8,1.1.1.1"
+    zh-CN: "指定要在TUN接口上设置的自定义DNS服务器IP。这些将与魔法DNS虚拟IP一起使用。逗号分隔列表，例如：8.8.8.8,1.1.1.1"
   private_mode:
     en: "if true, foreign networks are only allowed when this node can verify they use the same network secret, or when a foreign credential node is already trusted via admin-issued credential propagation; different or missing secrets are otherwise rejected."
     zh-CN: "如果为true，则仅允许两类 foreign network 接入：本节点能验证其使用相同 network secret 的节点，或已通过 foreign network 管理节点传播而被信任的 credential 节点；否则 secret 不同或缺失时会被拒绝。"

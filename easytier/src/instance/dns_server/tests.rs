@@ -124,7 +124,7 @@ async fn test_magic_dns_server_instance() {
     let tun_name = virtual_nic.ifname().await.unwrap();
     let fake_ip = Ipv4Addr::from_str("100.100.100.101").unwrap();
     let dns_server_inst =
-        MagicDnsServerInstance::new(peer_mgr.clone(), Some(tun_name), tun_ip, fake_ip)
+        MagicDnsServerInstance::new(peer_mgr.clone(), Some(tun_name), tun_ip, fake_ip, vec![])
             .await
             .unwrap();
 
@@ -163,7 +163,7 @@ async fn test_magic_dns_runner() {
         let (peer_mgr, virtual_nic) = prepare_env("test1", tun_ip).await;
         let tun_name = virtual_nic.ifname().await.unwrap();
         let fake_ip = Ipv4Addr::from_str(MAGIC_DNS_FAKE_IP).unwrap();
-        let mut dns_runner = DnsRunner::new(peer_mgr, Some(tun_name), tun_ip, fake_ip);
+        let mut dns_runner = DnsRunner::new(peer_mgr, Some(tun_name), tun_ip, fake_ip, vec![]);
 
         let cancel_token = CancellationToken::new();
         let cancel_token_clone = cancel_token.clone();
@@ -191,7 +191,7 @@ async fn test_magic_dns_runner() {
             prepare_env_with_tld_dns_zone("test2", tun_ip, Some(custom_tld_zone)).await;
         let tun_name = virtual_nic.ifname().await.unwrap();
         let fake_ip = Ipv4Addr::from_str(MAGIC_DNS_FAKE_IP).unwrap();
-        let mut dns_runner = DnsRunner::new(peer_mgr, Some(tun_name), tun_ip, fake_ip);
+        let mut dns_runner = DnsRunner::new(peer_mgr, Some(tun_name), tun_ip, fake_ip, vec![]);
 
         let cancel_token = CancellationToken::new();
         let cancel_token_clone = cancel_token.clone();
@@ -221,7 +221,7 @@ async fn test_magic_dns_update_replaces_records_for_same_client() {
     replace_stun_info_collector(peer_mgr.clone(), NatType::PortRestricted);
 
     let fake_ip = Ipv4Addr::from_str(MAGIC_DNS_FAKE_IP).unwrap();
-    let dns_server_inst = MagicDnsServerInstance::new(peer_mgr.clone(), None, tun_ip, fake_ip)
+    let dns_server_inst = MagicDnsServerInstance::new(peer_mgr.clone(), None, tun_ip, fake_ip, vec![])
         .await
         .unwrap();
 

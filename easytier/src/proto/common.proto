@@ -84,6 +84,10 @@ message FlagsInConfig {
   // applied via setsockopt. Requires CAP_NET_ADMIN; silently ignored on
   // non-Linux platforms.
   optional uint32 socket_mark = 43;
+
+  // custom DNS servers to set on the TUN interface,
+  // used alongside the magic DNS fake IP
+  repeated string dns_servers = 44;
 }
 
 message RpcDescriptor {

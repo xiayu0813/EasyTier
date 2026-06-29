@@ -63,6 +63,7 @@ pub(super) struct MagicDnsServerInstanceData {
     tun_dev: Option<String>,
     tun_ip: Ipv4Addr,
     fake_ip: Ipv4Addr,
+    dns_servers: Vec<String>,
     my_peer_id: PeerId,
 
     // zone -> (tunnel remote addr -> route)
@@ -154,8 +155,10 @@ impl MagicDnsServerInstanceData {
 
     fn do_system_config(&self, zone: &str) -> Result<(), anyhow::Error> {
         if let Some(c) = &self.system_config {
+            let mut nameservers: Vec<String> = self.dns_servers.clone();
+            nameservers.push(self.fake_ip.to_string());
             c.set_dns(&OSConfig {
-                nameservers: vec![self.fake_ip.to_string()],
+                nameservers,
                 search_domains: vec![zone.to_string()],
                 match_domains: vec![zone.to_string()],
             })?;
@@ -515,6 +518,7 @@ impl MagicDnsServerInstance {
         tun_dev: Option<String>,
         tun_inet: Ipv4Inet,
         fake_ip: Ipv4Addr,
+        dns_servers: Vec<String>,
     ) -> Result<Self, anyhow::Error> {
         let tcp_listener = TcpTunnelListener::new(MAGIC_DNS_INSTANCE_ADDR.parse()?);
         let mut rpc_server = StandAloneServer::new(tcp_listener);
@@ -546,6 +550,7 @@ impl MagicDnsServerInstance {
             tun_dev: tun_dev.clone(),
             tun_ip: tun_inet.address(),
             fake_ip,
+            dns_servers: dns_servers.clone(),
             my_peer_id: peer_mgr.my_peer_id(),
             route_infos: DashMap::new(),
             system_config: get_system_config(tun_dev.as_deref())?,
