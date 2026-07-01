@@ -1,3 +1,4 @@
+use arc_swap::ArcSwapOption;
 use crossbeam::atomic::AtomicCell;
 use futures::{StreamExt, TryFutureExt};
 use std::{
@@ -10,13 +11,6 @@ use std::{
     },
 };
 
-#[cfg(feature = "hotpath")]
-use hotpath::wrap::std::sync::Mutex as StdMutex;
-#[cfg(feature = "hotpath")]
-use hotpath::wrap::tokio::sync::Mutex;
-#[cfg(not(feature = "hotpath"))]
-use std::sync::Mutex as StdMutex;
-#[cfg(not(feature = "hotpath"))]
 use tokio::sync::Mutex;
 
 use base64::Engine as _;
@@ -107,7 +101,7 @@ struct PeerSessionTunnelFilter {
     enabled: bool,
     my_peer_id: Arc<AtomicCell<PeerId>>,
     peer_id: Arc<AtomicCell<Option<PeerId>>>,
-    session: Arc<StdMutex<Option<Arc<PeerSession>>>>,
+    session: Arc<ArcSwapOption<PeerSession>>,
 }
 
 impl PeerSessionTunnelFilter {
@@ -116,7 +110,7 @@ impl PeerSessionTunnelFilter {
             enabled,
             my_peer_id: Arc::new(AtomicCell::new(PeerId::default())),
             peer_id: Arc::new(AtomicCell::new(None)),
-            session: Arc::new(hotpath::mutex!(std::sync::Mutex::new(None))),
+            session: Arc::new(ArcSwapOption::empty()),
         }
     }
 
@@ -125,7 +119,7 @@ impl PeerSessionTunnelFilter {
             enabled,
             my_peer_id: Arc::new(AtomicCell::new(my_peer_id)),
             peer_id: Arc::new(AtomicCell::new(None)),
-            session: Arc::new(hotpath::mutex!(std::sync::Mutex::new(None))),
+            session: Arc::new(ArcSwapOption::empty()),
         }
     }
 
@@ -138,7 +132,7 @@ impl PeerSessionTunnelFilter {
     }
 
     fn set_session(&self, session: Arc<PeerSession>) {
-        *self.session.lock().unwrap() = Some(session);
+        self.session.store(Some(session));
     }
 
     fn should_skip_encrypt(&self, hdr: &crate::tunnel::packet_def::PeerManagerHeader) -> bool {
@@ -172,16 +166,15 @@ impl TunnelFilter for PeerSessionTunnelFilter {
             return Some(data);
         };
 
-        let mut guard = self.session.lock().unwrap();
-        let Some(session) = guard.as_mut() else {
-            return Some(data);
-        };
-
         let my_peer_id = self.my_peer_id.load();
-        if my_peer_id != hdr.from_peer_id.get() {
+        if my_peer_id != hdr.from_peer_id.get() || hdr.to_peer_id.get() != peer_id {
             return Some(data);
         }
 
+        let session_guard = self.session.load();
+        let Some(session) = session_guard.as_deref() else {
+            return Some(data);
+        };
         if let Err(e) = session.encrypt_payload(my_peer_id, peer_id, &mut data) {
             tracing::warn!(
                 ?my_peer_id,
@@ -226,8 +219,8 @@ impl TunnelFilter for PeerSessionTunnelFilter {
             return Some(Ok(data));
         }
 
-        let mut guard = self.session.lock().unwrap();
-        let Some(session) = guard.as_mut() else {
+        let session_guard = self.session.load();
+        let Some(session) = session_guard.as_deref() else {
             return Some(Ok(data));
         };
 
@@ -388,12 +381,12 @@ impl PeerConn {
             session_filter,
             noise_handshake_result: None,
 
-            tunnel: Arc::new(hotpath::mutex!(tokio::sync::Mutex::new(Box::new(
-                guard!([mut mpsc_tunnel] mpsc_tunnel.close()),
-            )
-                as Box<dyn Any + Send + 'static>))),
+            tunnel: Arc::new(Mutex::new(
+                Box::new(guard!([mut mpsc_tunnel] mpsc_tunnel.close()))
+                    as Box<dyn Any + Send + 'static>,
+            )),
             sink,
-            recv: hotpath::mutex!(tokio::sync::Mutex::new(Some(recv))),
+            recv: Mutex::new(Some(recv)),
             tunnel_info,
 
             tasks: JoinSet::new(),
@@ -1470,7 +1463,6 @@ impl PeerConn {
         });
     }
 
-    #[cfg_attr(feature = "hotpath", hotpath::measure(impl_type = "PeerConn"))]
     pub async fn send_msg(&self, msg: ZCPacket) -> Result<(), Error> {
         Ok(self.sink.send(msg).await?)
     }
@@ -1651,6 +1643,45 @@ pub mod tests {
             )
             .map(|metric| metric.value)
             .unwrap_or(0)
+    }
+
+    #[test]
+    fn peer_session_filter_skips_relay_packet_for_next_hop() {
+        let my_peer_id = 10;
+        let next_hop_peer_id = 20;
+        let dst_peer_id = 30;
+        let filter = PeerSessionTunnelFilter::new_with_peer(my_peer_id, true);
+        filter.set_peer_id(next_hop_peer_id);
+
+        let session = Arc::new(PeerSession::new(
+            next_hop_peer_id,
+            PeerSession::new_root_key(),
+            1,
+            0,
+            "aes-gcm".to_string(),
+            "aes-gcm".to_string(),
+            None,
+        ));
+        session.invalidate();
+        filter.set_session(session);
+
+        let mut packet = ZCPacket::new_with_payload(b"relay payload");
+        packet.fill_peer_manager_hdr(my_peer_id, dst_peer_id, PacketType::Data as u8);
+        packet
+            .mut_peer_manager_header()
+            .unwrap()
+            .set_encrypted(true);
+        let original_len = packet.buf_len();
+
+        let packet = filter
+            .before_send(packet)
+            .expect("relay packet should bypass next-hop session");
+
+        let hdr = packet.peer_manager_header().unwrap();
+        assert_eq!(hdr.from_peer_id.get(), my_peer_id);
+        assert_eq!(hdr.to_peer_id.get(), dst_peer_id);
+        assert!(hdr.is_encrypted());
+        assert_eq!(packet.buf_len(), original_len);
     }
 
     #[tokio::test]
