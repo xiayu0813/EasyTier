@@ -139,6 +139,7 @@ export function DEFAULT_NETWORK_CONFIG(): NetworkConfig {
     instance_recv_bps_limit: null,
     mapped_listeners: [],
     enable_magic_dns: false,
+    dns_servers: [],
     enable_private_mode: false,
     port_forwards: [],
     acl: emptyAcl(),
@@ -306,6 +307,7 @@ export function normalizeNetworkConfig(config: NetworkConfig): NetworkConfig {
   normalized.relay_network_whitelist ??= []
   normalized.routes ??= []
   normalized.exit_nodes ??= []
+  normalized.dns_servers ??= []
   normalized.mapped_listeners ??= []
   normalized.port_forwards ??= []
   normalized.acl = config.acl === undefined ? undefined : normalizeAcl(normalized.acl)

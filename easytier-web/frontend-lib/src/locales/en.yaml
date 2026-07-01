@@ -193,6 +193,9 @@ socks5_help: |
 exit_nodes: Exit Nodes
 exit_nodes_help: Exit nodes to forward all traffic to, a virtual ipv4 address, priority is determined by the order of the list
 
+dns_servers: Custom DNS Servers
+dns_servers_help: Custom DNS servers to set on the TUN interface, used alongside the magic DNS fake IP. e.g.:8.8.8.8
+
 port_forwards: Port Forward
 port_forwards_help: "forward local port to remote port in virtual network. e.g.: udp://0.0.0.0:12345/10.126.126.1:23456, means forward local udp port 12345 to 10.126.126.1:23456 in the virtual network. can specify multiple."
 port_forwards_bind_addr: "Bind address, e.g.: 0.0.0.0"

@@ -321,6 +321,7 @@ function makeConfig(): NetworkConfig {
     enable_socks5: true,
     socks5_port: 1086,
     exit_nodes: ['exit-a'],
+    dns_servers: ['8.8.8.8'],
     mapped_listeners: ['tcp://127.0.0.1:22000'],
     port_forwards: [{
       proto: 'udp',
@@ -400,6 +401,7 @@ describe('Config.vue network config projection', () => {
     expect(input(wrapper, '#routes').value).toBe('192.168.0.0/16')
     expect(input(wrapper, '#socks5_port').value).toBe('1086')
     expect(input(wrapper, '#exit_nodes').value).toBe('exit-a')
+    expect(input(wrapper, '#dns_servers').value).toBe('8.8.8.8')
     expect(input(wrapper, 'input[data-add-label="add_listener_url"]').value).toBe('tcp://0.0.0.0:12010')
     expect(input(wrapper, 'input[data-add-label="add_mapped_listener"]').value).toBe('tcp://127.0.0.1:22000')
 
@@ -431,6 +433,7 @@ describe('Config.vue network config projection', () => {
     await setInput(wrapper, '#routes', '192.168.10.0/24')
     await setInput(wrapper, '#socks5_port', '1089')
     await setInput(wrapper, '#exit_nodes', 'exit-edited')
+    await setInput(wrapper, '#dns_servers', '1.1.1.1')
     await setInput(wrapper, 'input[data-add-label="add_mapped_listener"]', 'tcp://127.0.0.1:23000')
     await wrapper.find('select[data-stub="select-button"]').setValue('tcp')
     await setInput(wrapper, 'input[placeholder="port_forwards_bind_addr"]', '127.0.0.1')
@@ -459,6 +462,7 @@ describe('Config.vue network config projection', () => {
       routes: ['192.168.10.0/24'],
       socks5_port: 1089,
       exit_nodes: ['exit-edited'],
+      dns_servers: ['1.1.1.1'],
       mapped_listeners: ['tcp://127.0.0.1:23000'],
       port_forwards: [{
         proto: 'tcp',

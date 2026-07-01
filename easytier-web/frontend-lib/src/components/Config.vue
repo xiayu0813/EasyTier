@@ -72,6 +72,14 @@ function searchWhitelistSuggestions(e: { query: string }) {
   whitelistSuggestions.value = ret
 }
 
+const dnsServersSuggestions = ref([''])
+
+function searchDnsServersSuggestions(e: { query: string }) {
+  const ret = []
+  ret.push(e.query)
+  dnsServersSuggestions.value = ret
+}
+
 interface BoolFlag {
   field: keyof NetworkConfig
   help: string
@@ -420,6 +428,18 @@ const instanceRecvBpsLimitInput = computed<string>({
                   <AutoComplete id="exit_nodes" v-model="curNetwork.exit_nodes"
                     :placeholder="t('chips_placeholder', ['192.168.8.8'])" class="w-full" multiple fluid
                     :suggestions="exitNodesSuggestions" @complete="searchExitNodesSuggestions" />
+                </div>
+              </div>
+
+              <div class="flex flex-row gap-x-9 flex-wrap w-full">
+                <div class="flex flex-col gap-2 grow p-fluid">
+                  <div class="flex">
+                    <label for="dns_servers">{{ t('dns_servers') }}</label>
+                    <span class="pi pi-question-circle ml-2 self-center" v-tooltip="t('dns_servers_help')"></span>
+                  </div>
+                  <AutoComplete id="dns_servers" v-model="curNetwork.dns_servers"
+                    :placeholder="t('chips_placeholder', ['8.8.8.8'])" class="w-full" multiple fluid
+                    :suggestions="dnsServersSuggestions" @complete="searchDnsServersSuggestions" />
                 </div>
               </div>
 

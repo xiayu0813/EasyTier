@@ -144,6 +144,7 @@ function allFieldFixture() {
     enable_manual_routes: true,
     routes: ['10.20.0.0/16', 'fd00:20::/64'],
     exit_nodes: ['10.9.8.1', 'fd00::1'],
+    dns_servers: ['8.8.8.8', 'fd00::8888'],
     proxy_forward_by_system: true,
     disable_encryption: true,
     enable_socks5: true,
