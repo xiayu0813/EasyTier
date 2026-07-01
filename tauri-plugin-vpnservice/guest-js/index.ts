@@ -16,7 +16,7 @@ export interface InvokeResponse {
 export interface StartVpnRequest {
   ipv4Addr?: string;
   routes?: string[];
-  dns?: string;
+  dns?: string[];
   disallowedApplications?: string[];
   mtu?: number;
 }
@@ -25,7 +25,7 @@ export interface VpnStatusResponse {
   running: boolean;
   ipv4Addr?: string;
   routes?: string[];
-  dns?: string;
+  dns?: string[];
 }
 
 export async function prepare_vpn(): Promise<InvokeResponse | null> {

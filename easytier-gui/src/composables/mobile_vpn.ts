@@ -10,18 +10,19 @@ interface vpnStatus {
   ipv4Addr: string | null | undefined
   ipv4Cidr: number | null | undefined
   routes: string[]
-  dns: string | null | undefined
+  dns: string[]
 }
 
 let dhcpPollingTimer: NodeJS.Timeout | null = null
 const DHCP_POLLING_INTERVAL = 2000 // 2秒后重试
+const MAGIC_DNS_FAKE_IP = '100.100.100.101'
 
 const curVpnStatus: vpnStatus = {
   running: false,
   ipv4Addr: undefined,
   ipv4Cidr: undefined,
   routes: [],
-  dns: undefined,
+  dns: [],
 }
 
 async function requestVpnPermission() {
@@ -44,7 +45,7 @@ function resetVpnConfigStatus() {
   curVpnStatus.ipv4Addr = undefined
   curVpnStatus.ipv4Cidr = undefined
   curVpnStatus.routes = []
-  curVpnStatus.dns = undefined
+  curVpnStatus.dns = []
 }
 
 function syncVpnStatusFromNative(status: Awaited<ReturnType<typeof get_vpn_status>>) {
@@ -68,7 +69,7 @@ function syncVpnStatusFromNative(status: Awaited<ReturnType<typeof get_vpn_statu
   }
 
   curVpnStatus.routes = [...(status?.routes ?? [])]
-  curVpnStatus.dns = status?.dns ?? undefined
+  curVpnStatus.dns = [...(status?.dns ?? [])]
 }
 
 async function waitVpnStatus(target_status: boolean, timeout_sec: number) {
@@ -96,7 +97,7 @@ async function doStopVpn(force = false) {
   resetVpnConfigStatus()
 }
 
-async function doStartVpn(ipv4Addr: string, cidr: number, routes: string[], dns?: string) {
+async function doStartVpn(ipv4Addr: string, cidr: number, routes: string[], dns: string[]) {
   if (curVpnStatus.running) {
     return
   }
@@ -179,7 +180,7 @@ function getRoutesForVpn(routes: Route[] | undefined, node_config: NetworkTypes.
   }
 
   if (node_config.enable_magic_dns) {
-    ret.push('100.100.100.101/32')
+    ret.push(`${MAGIC_DNS_FAKE_IP}/32`)
   }
 
   // sort and dedup
@@ -241,12 +242,15 @@ export async function onNetworkInstanceChange(instanceId: string) {
 
   const routes = getRoutesForVpn(curNetworkInfo?.routes, config)
 
-  const dns = config.enable_magic_dns ? '100.100.100.101' : undefined
+  const dns = [
+    ...(config.dns_servers ?? []),
+    ...(config.enable_magic_dns ? [MAGIC_DNS_FAKE_IP] : []),
+  ]
 
   const ipChanged = virtual_ip !== curVpnStatus.ipv4Addr
   const cidrChanged = network_length !== curVpnStatus.ipv4Cidr
   const routesChanged = JSON.stringify(routes) !== JSON.stringify(curVpnStatus.routes)
-  const dnsChanged = dns != curVpnStatus.dns
+  const dnsChanged = JSON.stringify(dns) !== JSON.stringify(curVpnStatus.dns)
   const configChanged = ipChanged || cidrChanged || routesChanged || dnsChanged
   const shouldStartVpn = !curVpnStatus.running
 
